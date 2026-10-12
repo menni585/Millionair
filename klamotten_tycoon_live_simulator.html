@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PayPocket™ - Klamotten Tycoon & Live Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        paypal: {
+                            blue: '#0070ba',
+                            darkblue: '#003087',
+                            light: '#f5f7fa',
+                            success: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 112, 186, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(0, 112, 186, 0.8); }
+        }
+        .paypal-glow { animation: pulseGlow 3s infinite; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-paypal-blue selection:text-white pb-10">
+
+    <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 px-3 py-2.5 backdrop-blur">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-paypal-blue text-white px-3 py-2 rounded-xl font-black text-lg tracking-wider shadow-lg shadow-paypal-blue/30 flex items-center gap-2">
+                        <i class="fa-brands fa-paypal text-xl"></i>
+                        <span>PayPocket™</span>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tycoon Guthaben</div>
+                        <div class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span id="headerBalance" class="text-sm font-extrabold text-emerald-400">€1.500,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="resetGameSave()" class="sm:hidden text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-2.5 py-1.5 rounded-lg border border-rose-500/20 active:scale-95 transition-all">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Reset
+                </button>
+            </div>
+
+            <nav class="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 overflow-x-auto max-w-full w-full sm:w-auto text-xs">
+                <button onclick="switchTab('shop')" id="nav-shop" class="px-3.5 py-2 rounded-lg font-semibold transition-all bg-paypal-blue text-white shadow whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-shirt mr-1"></i> Shop & Lager
+                </button>
+                <button onclick="switchTab('cars')" id="nav-cars" class="px-3.5 py-2 rounded-lg font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-car mr-1"></i> 10 Autos
+                </button>
+                <button onclick="switchTab('jets')" id="nav-jets" class="px-3.5 py-2 rounded-lg font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-plane mr-1"></i> 10 Jets
+                </button>
+                <button onclick="switchTab('travel')" id="nav-travel" class="px-3.5 py-2 rounded-lg font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-earth-americas mr-1"></i> Reisen
+                </button>
+                <button onclick="switchTab('live')" id="nav-live" class="px-3.5 py-2 rounded-lg font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-video mr-1"></i> Live Stream
+                </button>
+                <button onclick="switchTab('stats')" id="nav-stats" class="px-3.5 py-2 rounded-lg font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-700/50 whitespace-nowrap active:scale-95">
+                    <i class="fa-solid fa-receipt mr-1"></i> Konto
+                </button>
+            </nav>
+
+            <button onclick="resetGameSave()" class="hidden sm:flex text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3 py-2 rounded-lg border border-rose-500/20 font-medium active:scale-95 transition-all">
+                <i class="fa-solid fa-rotate-right mr-1.5"></i> Spielstand Reset
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+
+        <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none max-w-xs w-full"></div>
+
+        <!-- 1. CLOTHES SHOP & INVENTORY TAB -->
+        <section id="tab-shop" class="space-y-6">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-store text-paypal-blue"></i> Klamotten Großhandel & Lager
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Geld gibt es NUR, wenn du Ware im Lager hast und Bots sie abkaufen!</p>
+                </div>
+                <div class="bg-slate-800/80 px-4 py-2.5 rounded-xl border border-slate-700 text-xs flex items-center gap-3">
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider">Aktueller Standort:</div>
+                        <div id="currentCountryDisplay" class="font-bold text-paypal-blue flex items-center gap-1 text-sm">
+                            <i class="fa-solid fa-location-dot"></i> Deutschland
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Wholesale Store -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider text-slate-300">
+                            <i class="fa-solid fa-cart-shopping text-paypal-blue"></i> Großhandel (Klamotten einkaufen)
+                        </h2>
+                        <div id="wholesaleContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    </div>
+
+                    <!-- User Stock Inventory -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-sm font-bold text-white flex items-center justify-between uppercase tracking-wider text-slate-300">
+                            <span><i class="fa-solid fa-boxes-stacked text-emerald-400 mr-1.5"></i> Dein Lagerbestand & Preise</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Verkaufspreise festlegen</span>
+                        </h2>
+                        <div id="inventoryContainer" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- Bot Sales Live Ticker -->
+                <div class="space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> Bot-Verkäufe
+                            </h2>
+                            <span class="text-[10px] text-emerald-400 font-mono">30-60 sec Timer</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Bots kaufen dein Lager leer (30-60 Sekunden Intervall).</p>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-slate-800 h-2 rounded-full mb-4 overflow-hidden border border-slate-700/50">
+                            <div id="botTimerBar" class="bg-paypal-blue h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        
+                        <div id="salesTicker" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                            <div class="text-center text-slate-500 py-8 text-xs italic">Warte auf nächsten Verkaufs-Ansturm...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. CARS TAB (10 CARS WITH PS & KM/H STATS) -->
+        <section id="tab-cars" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-car-side text-amber-400"></i> Exklusives Autohaus (10 Supercars)
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Jedes Auto zeigt präzise PS- und KM/H-Leistungswerte!</p>
+                </div>
+                <div class="bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-amber-400">
+                    Gekauft: <span id="ownedCarsCount">0</span> / 10 Fahrzeuge
+                </div>
+            </div>
+
+            <div id="carsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </section>
+
+        <!-- 3. JETS TAB (10 PLANES) -->
+        <section id="tab-jets" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-plane-departure text-cyan-400"></i> Privatjet-Flotte (10 Flieger)
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Kaufe Privatjets, um in exklusive Länder und Modemetropolen zu reisen!</p>
+                </div>
+                <div class="bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-cyan-400">
+                    Flotte: <span id="ownedJetsCount">0</span> / 10 Jets
+                </div>
+            </div>
+
+            <div id="jetsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- 4. INTERNATIONAL TRAVEL TAB -->
+        <section id="tab-travel" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-earth-americas text-emerald-400"></i> Internationale Flugreise
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Wähle dein Reiseziel. In jedem Land kannst du andere exklusive Klamotten & Autos kaufen!</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider text-slate-300">
+                    <i class="fa-solid fa-map-location-dot text-emerald-400"></i> Verfügbare Länder
+                </h2>
+                <div id="destinationsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- 5. LIVE STREAM TAB -->
+        <section id="tab-live" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-tower-broadcast text-rose-500 animate-pulse"></i> Livestream Studio
+                    </h1>
+                    <p class="text-slate-400 text-xs mt-1">Gehe live mit deinen Luxusautos! Bots im Chat können PayPocket-Spenden senden.</p>
+                </div>
+                <div id="streamStatusBadge" class="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 font-semibold text-xs flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span> Stream Offline
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-black rounded-2xl border border-slate-800 overflow-hidden shadow-2xl relative aspect-video flex flex-col items-center justify-center">
+                        <div id="offlineOverlay" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-10">
+                            <i class="fa-solid fa-video-slash text-4xl text-slate-600 mb-2"></i>
+                            <h3 class="text-lg font-bold text-white">Livestream Studio Bereit</h3>
+                            <p class="text-slate-400 text-xs max-w-sm mt-1 mb-5">Starte den Stream, um Live-Zuschauer zu bekommen und PayPocket-Donations abzusahnen!</p>
+                            <button onclick="toggleLiveStream()" class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-play"></i> Stream Starten
+                            </button>
+                        </div>
+
+                        <div id="liveActiveScreen" class="w-full h-full relative hidden flex flex-col justify-between p-4 bg-gradient-to-b from-slate-900/60 via-transparent to-black/90">
+                            <div class="flex justify-between items-center z-20">
+                                <div class="bg-rose-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider flex items-center gap-1 shadow">
+                                    <span class="w-2 h-2 rounded-full bg-white animate-ping"></span> LIVE
+                                </div>
+                                <div class="bg-black/70 backdrop-blur px-3 py-1 rounded-lg text-xs font-semibold text-slate-200 flex items-center gap-2 border border-slate-800">
+                                    <i class="fa-solid fa-user-group text-rose-400"></i> <span id="viewerCount">0</span> Zuschauer
+                                </div>
+                            </div>
+
+                            <div class="text-center my-auto">
+                                <div class="inline-block p-5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 mb-2 shadow-xl">
+                                    <i class="fa-solid fa-microphone-lines text-3xl"></i>
+                                </div>
+                                <h3 class="text-lg font-extrabold text-white">Flexing meine Klamotten & Luxusautos!</h3>
+                                <p id="currentStreamLocation" class="text-[11px] text-rose-300 mt-0.5">Broadcasting Live</p>
+                            </div>
+
+                            <div class="flex justify-between items-center z-20">
+                                <button onclick="toggleLiveStream()" class="px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-white text-xs font-bold rounded-lg border border-slate-700 active:scale-95">
+                                    Beenden
+                                </button>
+                                <div class="text-[10px] text-slate-400 bg-black/60 px-2.5 py-1 rounded-lg border border-slate-800">
+                                    PayPal Donations Aktiv
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col h-[380px]">
+                    <h3 class="text-xs font-bold text-white mb-3 flex items-center justify-between pb-2 border-b border-slate-800">
+                        <span><i class="fa-solid fa-comments text-rose-400 mr-1.5"></i> Live Chat & Donations</span>
+                        <span class="text-[10px] text-emerald-400">Online</span>
+                    </h3>
+                    <div id="liveChatMessages" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+                        <div class="text-center text-slate-500 py-10 italic">Der Chat ist offline.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. ACCOUNT STATS TAB -->
+        <section id="tab-stats" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                <h1 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-brands fa-paypal text-paypal-blue"></i> Transaktionsjournal
+                </h1>
+                <p class="text-slate-400 text-xs mt-1">Echte Transaktionen aus Verkäufen und Live-Spenden.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-xl">
+                    <div class="text-[10px] text-slate-400 font-medium uppercase">Gesamtertrag</div>
+                    <div id="statTotalEarned" class="text-xl font-black text-emerald-400 mt-0.5">€0,00</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-xl">
+                    <div class="text-[10px] text-slate-400 font-medium uppercase">Verkaufte Teile</div>
+                    <div id="statTotalSold" class="text-xl font-black text-paypal-blue mt-0.5">0</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-xl">
+                    <div class="text-[10px] text-slate-400 font-medium uppercase">Erhaltene Spenden</div>
+                    <div id="statTotalDonations" class="text-xl font-black text-rose-400 mt-0.5">€0,00</div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+                <h3 class="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                    <i class="fa-solid fa-receipt text-slate-400"></i> PayPocket Buchungen
+                </h3>
+                <div id="transactionsList" class="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                    <div class="text-center text-slate-500 py-8 text-xs italic">Noch keine Buchungen vorhanden.</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const SAVE_KEY = 'PayPocket_Tycoon_Save_v4';
+
+        // Initial Game State with NO passive income
+        const defaultGameState = {
+            balance: 1500.00,
+            totalEarned: 0.00,
+            totalSold: 0,
+            totalDonationsAmount: 0,
+            currentCountryId: 'germany',
+            isLive: false,
+            viewerCount: 0,
+
+            wholesaleCatalog: [
+                { id:
